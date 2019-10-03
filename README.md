@@ -26,4 +26,4 @@ of loss functions and accuracy of the model are included below
 A confusion matrix is a summary of prediction results on a classification problem.
 The number of correct and incorrect predictions are summarized with count values and broken down by each class
 
-![alt text](Hist_CNN.PNG)
+![alt text](Confusion_Matrix.PNG)
