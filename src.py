@@ -22,21 +22,24 @@ num_features = 43
 batch_size = 1024
 n_epochs   = 300
 # Layer classes
-# inherited to writout summary for tensorboard class MyLSTM(LSTM):
+# inherited to writout summary for tensorboard 
+class MyLSTM(LSTM):
     def call(self, inputs, mask=None, training=None, initial_state=None):
         ret = super(MyLSTM, self).call(inputs,
                                        mask=mask,
                                        training=training,
                                initial_state=initial_state)
-tf.summary.histogram('activation',
-activation = ret
+        tf.summary.histogram('activation',
+        activation = ret
         return activation
+                             
 class MyDense(Dense):
     def call(self, inputs):
         activation = super(MyDense, self).call(inputs)
         tf.summary.histogram('activation',
-activation)
+         activation)
         return activation
+                             
 class Subtract(keras.layers.Layer):
     def __init__(self, value=0.0, **kwargs):
         self.init_value = np.float32(value)
@@ -46,12 +49,13 @@ class Subtract(keras.layers.Layer):
             name="value",
             shape=(1,1,num_features),
             initializer=keras.initializers.Constant(
-activation)
-                    value=np.float32(self.init_value)),
-super(Subtract, self).build(input_shape)
-        trainable=False)
-def call(self, inputs):
+            activation)
+            value=np.float32(self.init_value)),
+            super(Subtract, self).build(input_shape)
+            trainable=False)
+     def call(self, inputs):
         return inputs - self.value
+    
 class Multiply(keras.layers.Layer):
     def __init__(self, value=1.0, **kwargs):
         self.init_value = np.float32(value)
@@ -66,6 +70,7 @@ class Multiply(keras.layers.Layer):
         super(Multiply, self).build(input_shape)
     def call(self, inputs):
         return inputs * tf.exp(self.log_value)
+      
 class Conv1D(keras.layers.Conv1D):
     def call(self, inputs):
         activation = super(Conv1D, self).call(inputs)
@@ -73,6 +78,7 @@ class Conv1D(keras.layers.Conv1D):
             'activation',
             activation)
         return activation
+      
 class NoisyVoting1D(keras.layers.Layer):
     def call(self, inputs):
         random_weights = keras.backend.random_uniform(
@@ -81,25 +87,29 @@ class NoisyVoting1D(keras.layers.Layer):
             maxval=1.5)
         random_weights = tf.expand_dims(random_weights, axis=-1)
         random_weight_sum = keras.backend.sum(random_weights,
-axis=[1],
+        axis=[1],
                                               keepdims=True)
         random_weights = random_weights / random_weight_sum
         activation = keras.backend.sum(random_weights * inputs,
                                        axis=[1],
                                        keepdims=True)
         return activation
-def load_data(dataset):
-    data = np.load(dataset, allow_pickle=True)
-    X = np.concatenate(data[:,0])[:, :, :num_features]
-    y = np.concatenate(data[:,1])
-    n_prog    = len(y[y == 1])
-    n_nonprog = len(y[y == 0])
-    print (f'Number of prog    samples = {n_prog}')
-    print (f'Number of nonprog samples = {n_nonprog}')
-    assert y.shape[0] == X.shape[0]
-    return X, y
+      
+    def load_data(dataset):
+       data = np.load(dataset, allow_pickle=True)
+       X = np.concatenate(data[:,0])[:, :, :num_features]
+       y = np.concatenate(data[:,1])
+       n_prog    = len(y[y == 1])
+       n_nonprog = len(y[y == 0])
+       print (f'Number of prog    samples = {n_prog}')
+       print (f'Number of nonprog samples = {n_nonprog}')
+       assert y.shape[0] == X.shape[0]
+       return X, y
+      
+      
 # Building the model
-def NN(input_shape, mean, std):
+
+ def NN(input_shape, mean, std):
     model = Sequential()
     model.add(Subtract(mean, input_shape=input_shape))
     model.add(Multiply(1/std))
@@ -127,7 +137,7 @@ def NN(input_shape, mean, std):
                     pool_size=2,
                     strides=2,
                     padding="valid"))
-    model.add(Conv1D(filters=1,
+        model.add(Conv1D(filters=1,
                 kernel_size=1,
                 strides=1,
                 dilation_rate=1,
@@ -138,10 +148,12 @@ def NN(input_shape, mean, std):
                                                    distribution='uniform',
                                                    seed=None),
                 activation=None))
-    model.add(NoisyVoting1D())
-    model.add(keras.layers.GlobalAveragePooling1D())
-    model.add(keras.layers.Activation('sigmoid'))
-return model
+      model.add(NoisyVoting1D())
+      model.add(keras.layers.GlobalAveragePooling1D())
+      model.add(keras.layers.Activation('sigmoid'))
+      return model
+    
+    
 def train(model, X_train, y_train, X_validation, y_validation): # tensorboard log out
 now = datetime.datetime.now()
     time_label = now.strftime("%Y%m%d_%H-%M")
@@ -167,6 +179,7 @@ now = datetime.datetime.now()
     print("Dev accuracy:  ", accuracy)
     print("Saving the weights ...")
     model.save_weights(f'./saved_models/CNNW-{time_label}.h5')
+    
 def print_summary_statistics(pred_prob_song,
         pred_class_song, true_class_song, name_vl_song, im):
     print("\nsong_name, prob_prog(class1), pred_class, true_class, correct?\n")
@@ -181,7 +194,7 @@ def print_summary_statistics(pred_prob_song,
             true_label = 'prog   '
         if pred_class_song[j] != true_class_song[j]:
             correct = '  x  '
-else:
+        else:
             correct = 'good!'
         print('{0}  {1:5.3f}   {2}   {3}   {4}'.format(
             name_vl_song[j][:40].ljust(41),pred_prob_song[j],
@@ -203,15 +216,16 @@ else:
         plt.xticks(mapping, np.arange(10, tot_duration, every, dtype=int))
         plt.tight_layout()
         plt.show()
-    cm = metrics.confusion_matrix(true_class_song,pred_class_song)
-    accu = metrics.accuracy_score(true_class_song,pred_class_song)
-    info = metrics.balanced_accuracy_score(
+        cm = metrics.confusion_matrix(true_class_song,pred_class_song)
+        accu = metrics.accuracy_score(true_class_song,pred_class_song)
+        info = metrics.balanced_accuracy_score(
             true_class_song,pred_class_song,adjusted=True)
-    print('\nPrediction accuracy:', accu)
-    print('Informedness:', info)
-    print('\nConfusion Matrix:')
-    print(cm)
-    return cm,accu,info
+        print('\nPrediction accuracy:', accu)
+        print('Informedness:', info)
+        print('\nConfusion Matrix:')
+        print(cm)
+       return cm,accu,info
+  
 def predict(weight_file, dataset, test=False):
     model.load_weights(weight_file)
     labels = []
@@ -221,18 +235,18 @@ def predict(weight_file, dataset, test=False):
     im = []
     data = np.load(dataset, allow_pickle=True)
     if test == True:
-temp = list(itertools.chain.from_iterable(data)) #
-data = np.asarray(temp).reshape((int(len(temp)/3),3)) #
-6
+       temp = list(itertools.chain.from_iterable(data)) #
+       data = np.asarray(temp).reshape((int(len(temp)/3),3)) #
+
 
     for d in data:
         name = d[2]
         X    = d[0]
         y    = d[1][0]
         names.append(name)
-y_true.append(y)
-p = model.predict(X) # array of btw 0,1
-prob = np.average(p) # btw 0,1
+        y_true.append(y)
+        p = model.predict(X) # array of btw 0,1
+        prob = np.average(p) # btw 0,1
         # creating array of pixels
         prob_color = np.round(p.reshape((len(d[1]),1)) * 255)
         prob_color = np.repeat(prob_color, 100)
@@ -242,14 +256,16 @@ prob = np.average(p) # btw 0,1
         #im.save(f'{data[2]}.jpg')
         p[p < 0.5] = 0
         p[p >=0.5] = 1
-vote = np.average(p) # btw 0,1 probs.append(vote)
+        vote = np.average(p) # btw 0,1 probs.append(vote)
         if vote == 0.5:
             vote = vote + 0.1
-label = int(round(vote)) labels.append(label) # 0 or 1
-    return labels, probs, names, y_true, im
+       label = int(round(vote)) labels.append(label) # 0 or 1
+        return labels, probs, names, y_true, im
+  
 ########################################
 ### Loading training/validation data ###
 ########################################
+
 print (f'\nLoading the training set ...')
 X_train, y_train =
             load_data('../data_prep/43feature_proginprog/_train.npy')
@@ -265,12 +281,15 @@ assert y_train.shape[1:] == y_validation.shape[1:]
 mean = np.mean(X_train, axis=(0, 1), keepdims=True)
 std = np.std(X_train, axis=(0, 1), keepdims=True)
 input_shape = (X_train.shape[1], X_train.shape[2])
+
+
+
 ######################################## ### training/validation ### ######################################## if mode == 'Training':
     model = NN(input_shape, mean, std)
     model.summary()
-print("Compiling ...")
-# optimizer
-adam = Adam(lr=0.001, decay=1.e-7) model.compile(loss='binary_crossentropy',
+    print("Compiling ...")
+    # optimizer
+    adam = Adam(lr=0.001, decay=1.e-7) model.compile(loss='binary_crossentropy',
                        optimizer=adam,
                        metrics=['accuracy'])
     train(model, X_train, y_train, X_validation, y_validation)
@@ -285,9 +304,9 @@ adam = Adam(lr=0.001, decay=1.e-7) model.compile(loss='binary_crossentropy',
     print("\n######################################################")
     print("Model summary:")
 
-print("######################################################")
-model.summary()
-labels, probs, names, y_true, im =
+    print("######################################################")
+    model.summary()
+    labels, probs, names, y_true, im =
             predict('./saved_models/CNNW-20190501_16-50.h5',
                     '../data_prep/43feature_proginprog/_train.npy')
 print("\n######################################################")
